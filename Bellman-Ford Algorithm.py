@@ -10,40 +10,29 @@ routers = {
     'H': {'D': 2, 'G': 2},
 }
 
-
 # Use Bellman-Ford Algorithm to find the shortest route from a start node to all other nodes in the network.
-def dijkstra(network, start):
-    unvisited = {node: float('infinity') for node in network}
-    visited = {}
-    current = start
-    current_distance = 0
-    unvisited[current] = current_distance
+def bellman_ford(network, start):
+    distance = {node: float('inf') for node in network}
+    predecessor = {node: None for node in network}
+    distance[start] = 0
 
-    predecessors = {node: None for node in network}
+    for _ in range(len(network) - 1):
+        for node in network:
+            for neighbor, weight in network[node].items():
+                if distance[node] + weight < distance[neighbor]:
+                    distance[neighbor] = distance[node] + weight
+                    predecessor[neighbor] = node
 
-    while True:
-        for neighbor, weight in network[current].items():
-            if neighbor not in unvisited: continue
-            new_distance = current_distance + weight
-            if unvisited[neighbor] > new_distance:
-                unvisited[neighbor] = new_distance
-                predecessors[neighbor] = current
+    for node in network:
+        for neighbor, weight in network[node].items():
+            if distance[node] + weight < distance[neighbor]:
+                raise ValueError("Graph contains a negative-weight cycle")
 
-        visited[current] = current_distance
-        del unvisited[current]
+    return distance, predecessor
 
-        if not unvisited: break
-
-        candidates = [node for node in unvisited.items() if node[1]]
-        current, current_distance = sorted(candidates, key=lambda x: x[1])[0]
-
-    return visited, predecessors
-
-
-# Use the output from the Bellman-Ford algorithm to trace
-# back and determine the shortest path from source to destination.
-def get_path(source, destination, network):
-    distances, predecessors = dijkstra(network, source)
+# Use the output from the Bellman-Ford algorithm to trace back and determine the shortest path from source to destination.
+def get_path_bellman_ford(source, destination, network):
+    distances, predecessors = bellman_ford(network, source)
     path = [] # Store the shortest path nodes.
     node = destination
     while node != source:
@@ -56,20 +45,19 @@ def get_path(source, destination, network):
     path.reverse()
     return path, distances[destination]
 
-
 # Test the algorithm and find the paths between specific routers
 if __name__ == "__main__":
     source, destination = 'A', 'H'
-    path, distance = get_path(source, destination, routers)
+    path, distance = get_path_bellman_ford(source, destination, routers)
     print(f"Shortest path from {source} to {destination}: {' -> '.join(path)}")
     print(f"Total distance: {distance}")
 
     source, destination = 'D', 'H'
-    path, distance = get_path(source, destination, routers)
+    path, distance = get_path_bellman_ford(source, destination, routers)
     print(f"Shortest path from {source} to {destination}: {' -> '.join(path)}")
     print(f"Total distance: {distance}")
 
     source, destination = 'B', 'E'
-    path, distance = get_path(source, destination, routers)
+    path, distance = get_path_bellman_ford(source, destination, routers)
     print(f"Shortest path from {source} to {destination}: {' -> '.join(path)}")
     print(f"Total distance: {distance}")
